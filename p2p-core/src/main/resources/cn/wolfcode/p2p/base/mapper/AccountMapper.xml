@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.base.mapper.AccountMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.base.domain.Account">
+    <id column="id" property="id" />
+    <result column="trade_password" property="tradePassword" />
+    <result column="usable_amount" property="usableAmount" />
+    <result column="freezed_amount" property="freezedAmount" />
+    <result column="borrow_limit" property="borrowLimit" />
+    <result column="version" property="version" />
+    <result column="un_receive_interest" property="unReceiveInterest" />
+    <result column="un_receive_principal" property="unReceivePrincipal" />
+    <result column="un_return_amount" property="unReturnAmount" />
+    <result column="remain_borrow_limit" property="remainBorrowLimit" />
+  </resultMap>
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into account (id,trade_password, usable_amount, freezed_amount, borrow_limit,
+      version, un_receive_interest, un_receive_principal, un_return_amount, remain_borrow_limit
+      )
+    values (#{id},#{tradePassword}, #{usableAmount}, #{freezedAmount}, #{borrowLimit},
+      #{version}, #{unReceiveInterest}, #{unReceivePrincipal}, #{unReturnAmount}, #{remainBorrowLimit}
+      )
+  </insert>
+  <update id="updateByPrimaryKey">
+    update account
+    set trade_password = #{tradePassword},
+      usable_amount = #{usableAmount},
+      freezed_amount = #{freezedAmount},
+      borrow_limit = #{borrowLimit},
+      version = version+1,
+      un_receive_interest = #{unReceiveInterest},
+      un_receive_principal = #{unReceivePrincipal},
+      un_return_amount = #{unReturnAmount},
+      remain_borrow_limit = #{remainBorrowLimit}
+    where id = #{id} AND version = #{version}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+    select id, trade_password, usable_amount, freezed_amount, borrow_limit, version,
+    un_receive_interest, un_receive_principal, un_return_amount, remain_borrow_limit
+    from account
+    where id = #{id}
+  </select>
+</mapper>

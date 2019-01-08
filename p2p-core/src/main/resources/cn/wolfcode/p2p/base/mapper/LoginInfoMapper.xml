@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.base.mapper.LoginInfoMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.base.domain.LoginInfo">
+    <id column="id" property="id" />
+    <result column="nick_name" property="nickName" />
+    <result column="username" property="username" />
+    <result column="password" property="password" />
+    <result column="state" property="state" />
+    <result column="user_type" property="userType"/>
+  </resultMap>
+
+  <resultMap id="simpleMap" type="cn.wolfcode.p2p.base.domain.LoginInfo">
+    <id column="id" property="id" />
+    <result column="username" property="username" />
+  </resultMap>
+
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into login_info (nick_name, username, password, state,user_type)
+    values (#{nickName}, #{username}, #{password}, #{state},#{userType})
+  </insert>
+  <update id="updateByPrimaryKey">
+    update login_info
+    set nick_name = #{nickName},
+      username = #{username},
+      password = #{password},
+      state = #{state},
+    where id = #{id}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+    select id, nick_name, username, password, state
+    from login_info
+    where id = #{id}
+  </select>
+
+  <select id="selectExistUsername" resultType="int">
+    SELECT count(0) FROM login_info
+    WHERE username = #{username}
+  </select>
+
+    <select id="selectByUsernameAndPassword" resultMap="BaseResultMap">
+      select id, nick_name, username, state,user_type
+    from login_info
+    where username=#{username} AND password = #{password}
+    </select>
+
+    <select id="selectAuditors" resultMap="BaseResultMap">
+      select id, nick_name, username, state,user_type
+    from login_info
+    where auditor = 1;
+    </select>
+</mapper>

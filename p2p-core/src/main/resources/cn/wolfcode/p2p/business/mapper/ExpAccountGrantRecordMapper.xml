@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.business.mapper.ExpAccountGrantRecordMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.business.domain.ExpAccountGrantRecord">
+    <id column="id" property="id" />
+    <result column="amount" property="amount" />
+    <result column="grant_date" property="grantDate" />
+    <result column="return_date" property="returnDate" />
+    <result column="grant_type" property="grantType" />
+    <result column="note" property="note" />
+    <result column="state" property="state" />
+    <association property="grantUser" columnPrefix="gu_" resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.simpleMap"></association>
+  </resultMap>
+  <delete id="deleteByPrimaryKey">
+    delete from exp_account_grant_record
+    where id = #{id}
+  </delete>
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into exp_account_grant_record (grant_user_id, amount, grant_date, return_date, grant_type, note, 
+      state)
+    values (#{grantUser.id}, #{amount}, #{grantDate}, #{returnDate}, #{grantType}, #{note},
+      #{state})
+  </insert>
+  <update id="updateByPrimaryKey">
+    update exp_account_grant_record
+    set grant_user_id = #{grantUser.id},
+      amount = #{amount},
+      grant_date = #{grantDate},
+      return_date = #{returnDate},
+      grant_type = #{grantType},
+      note = #{note},
+      state = #{state}
+    where id = #{id}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+    select id, grant_user_id, amount, grant_date, return_date, grant_type, note, state
+    from exp_account_grant_record
+    where id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, grant_user_id, amount, grant_date, return_date, grant_type, note, state
+    from exp_account_grant_record
+  </select>
+    <select id="selectByUserId" resultMap="BaseResultMap">
+      select eagr.id, eagr.grant_user_id, eagr.amount, eagr.grant_date, return_date, grant_type, eagr.note, eagr.state,
+      gu.id gu_id,gu.username gu_username
+    from exp_account_grant_record eagr
+    JOIN login_info gu ON eagr.grant_user_id = gu.id
+    where eagr.grant_user_id = #{userId} AND eagr.state = 2
+    </select>
+  <select id="selectUnReturn" resultMap="BaseResultMap">
+    select eagr.id, eagr.grant_user_id, eagr.amount, eagr.grant_date, return_date, grant_type, eagr.note, eagr.state,
+      gu.id gu_id,gu.username gu_username
+    from exp_account_grant_record eagr
+    JOIN login_info gu ON eagr.grant_user_id = gu.id
+    WHERE eagr.return_date &lt;= now() AND eagr.state = 0
+  </select>
+</mapper>

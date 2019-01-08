@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.business.mapper.PaymentScheduleDetailMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.business.domain.PaymentScheduleDetail">
+    <id column="id" property="id" />
+    <result column="bid_amount" property="bidAmount" />
+    <result column="bid_id" property="bidId" />
+    <result column="total_amount" property="totalAmount" />
+    <result column="principal" property="principal" />
+    <result column="interest" property="interest" />
+    <result column="month_index" property="monthIndex" />
+    <result column="dead_line" property="deadLine" />
+    <result column="bid_request_id" property="bidRequestId" />
+    <result column="pay_date" property="payDate" />
+    <result column="return_type" property="returnType" />
+    <result column="payment_schedule_id" property="paymentScheduleId" />
+    <result column="to_login_info_id" property="toLoginInfoId" />
+    <association property="fromLoginInfo" columnPrefix="fli_" resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.simpleMap"></association>
+  </resultMap>
+  <delete id="deleteByPrimaryKey">
+    delete from payment_schedule_detail
+    where id = #{id}
+  </delete>
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into payment_schedule_detail (bid_amount, bid_id, total_amount, principal, interest, month_index, 
+      dead_line, bid_request_id, pay_date, return_type, payment_schedule_id, 
+      from_login_info_id, to_login_info_id)
+    values (#{bidAmount}, #{bidId}, #{totalAmount}, #{principal}, #{interest}, #{monthIndex}, 
+      #{deadLine}, #{bidRequestId}, #{payDate}, #{returnType}, #{paymentScheduleId}, 
+      #{fromLoginInfo.id}, #{toLoginInfoId})
+  </insert>
+  <update id="updateByPrimaryKey">
+    update payment_schedule_detail
+    set bid_amount = #{bidAmount},
+      bid_id = #{bidId},
+      total_amount = #{totalAmount},
+      principal = #{principal},
+      interest = #{interest},
+      month_index = #{monthIndex},
+      dead_line = #{deadLine},
+      bid_request_id = #{bidRequestId},
+      pay_date = #{payDate},
+      return_type = #{returnType},
+      payment_schedule_id = #{paymentScheduleId},
+      from_login_info_id = #{fromLoginInfo.id},
+      to_login_info_id = #{toLoginInfoId}
+    where id = #{id}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+    select psd.id, bid_amount, bid_id, total_amount, principal, interest, month_index, dead_line,
+    bid_request_id, pay_date, return_type, payment_schedule_id, from_login_info_id, to_login_info_id,
+    fli.id fli_id,fli.username fli_username
+    from payment_schedule_detail psd
+    JOIN login_info fli ON psd.from_login_info_id=fli.id
+    where psd.id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, bid_amount, bid_id, total_amount, principal, interest, month_index, dead_line, 
+    bid_request_id, pay_date, return_type, payment_schedule_id, from_login_info_id, to_login_info_id
+    from payment_schedule_detail
+  </select>
+    <select id="selectDetailsByPsIdAndBidRequestId" resultMap="BaseResultMap">
+      select psd.id, bid_amount, bid_id, total_amount, principal, interest, month_index, dead_line,
+    bid_request_id, pay_date, return_type, payment_schedule_id, from_login_info_id, to_login_info_id,
+    fli.id fli_id,fli.username fli_username
+    from payment_schedule_detail psd
+    JOIN login_info fli ON psd.from_login_info_id=fli.id
+    WHERE psd.payment_schedule_id = #{psId} AND psd.bid_request_id=#{bidRequestId}
+    </select>
+  <select id="selectUnReceivePrincipal" resultType="decimal">
+    SELECT sum(principal) FROM payment_schedule_detail
+    WHERE bid_request_id=#{bidRequestId} AND to_login_info_id = #{bidUserId}
+  </select>
+  <select id="selectUnReceiveInterest" resultType="decimal">
+    SELECT sum(interest) FROM payment_schedule_detail
+    WHERE bid_request_id=#{bidRequestId} AND to_login_info_id = #{bidUserId}
+  </select>
+  <select id="batchTransFerStateByBidRequestId">
+    UPDATE payment_schedule_detail SET transfer_state = 0
+    WHERE bid_request_id = #{bidRequestId}
+  </select>
+    <select id="selectrincipalByBidId" resultType="decimal">
+      SELECT sum(principal) FROM payment_schedule_detail
+    WHERE bid_id = #{bidId}
+    </select>
+    <update id="batchUpdateToLoginInfoBy">
+    UPDATE payment_schedule_detail SET to_login_info_id = #{toLoginInfoId}
+    WHERE bid_id = #{bidId} AND pay_date IS NULL
+  </update>
+  <update id="batchTransFerStateByBidIdAndToLoginInfoId">
+      UPDATE payment_schedule_detail SET transfer_state = #{transFerState}
+      WHERE bid_id = #{bidId} AND to_login_info_id = #{toLoginInfoId}
+    </update>
+</mapper>

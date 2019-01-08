@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.business.mapper.BidMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.business.domain.Bid">
+    <id column="id" property="id" />
+    <result column="actual_rate" property="actualRate" />
+    <result column="available_amount" property="availableAmount" />
+    <result column="bid_request_id" property="bidRequestId" />
+    <result column="bid_time" property="bidTime" />
+    <result column="bid_request_title" property="bidRequestTitle" />
+    <result column="bid_request_state" property="bidRequestState" />
+    <association property="bidUser" columnPrefix="bu_" resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.BaseResultMap"></association>
+  </resultMap>
+  <delete id="deleteByPrimaryKey">
+    delete from bid
+    where id = #{id}
+  </delete>
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into bid (actual_rate, available_amount, bid_request_id, bid_user_id, bid_time, 
+      bid_request_title, bid_request_state)
+    values (#{actualRate}, #{availableAmount}, #{bidRequestId}, #{bidUser.id}, #{bidTime},
+      #{bidRequestTitle}, #{bidRequestState})
+  </insert>
+  <update id="updateByPrimaryKey">
+    update bid
+    set actual_rate = #{actualRate},
+      available_amount = #{availableAmount},
+      bid_request_id = #{bidRequestId},
+      bid_user_id = #{bidUser.id},
+      bid_time = #{bidTime},
+      bid_request_title = #{bidRequestTitle},
+      bid_request_state = #{bidRequestState}
+    where id = #{id}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+    select b.id, actual_rate, available_amount, bid_request_id, bid_user_id, bid_time,
+    bid_request_title, bid_request_state,
+    bu.id bu_id,bu.username bu_username
+    from bid b
+    JOIN login_info bu ON b.bid_user_id = bu.id
+    where b.id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, actual_rate, available_amount, bid_request_id, bid_user_id, bid_time, 
+    bid_request_title, bid_request_state
+    from bid
+  </select>
+
+  <select id="selectByBidRequestId" resultMap="BaseResultMap">
+    select b.id, actual_rate, available_amount, bid_request_id, bid_user_id, bid_time,
+    bid_request_title, bid_request_state,
+    bu.id bu_id,bu.username bu_username
+    from bid b
+    JOIN login_info bu ON b.bid_user_id = bu.id
+    WHERE b.bid_request_id = #{id}
+  </select>
+
+    <select id="selectTotalBidByBidRequestIdAndBidId" resultType="decimal">
+      SELECT ifnull(sum(available_amount),0) FROM bid
+      WHERE bid_request_id = #{bidRequestId} AND bid_user_id = #{userId}
+    </select>
+
+    <select id="selectBidAmountByBidRequestIdAndUserId" resultType="decimal">
+      SELECT sum(available_amount) FROM bid
+      WHERE bid_request_id=#{bidRequestId} AND bid_user_id = #{userId}
+    </select>
+
+
+
+  <update id="updateStateByBidRequestId">
+    UPDATE bid SET bid_request_state = #{bidRequestState}
+    WHERE bid_request_id = #{bidRequestId}
+  </update>
+</mapper>

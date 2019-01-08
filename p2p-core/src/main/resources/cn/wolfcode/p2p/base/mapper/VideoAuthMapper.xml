@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.base.mapper.VideoAuthMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.base.domain.VideoAuth">
+    <id column="id" property="id" />
+    <result column="state" property="state" />
+    <result column="remark" property="remark" />
+    <result column="audit_time" property="auditTime" />
+    <result column="apply_time" property="applyTime" />
+    <result column="order_date" property="orderDate" />
+    <association property="auditor" javaType="cn.wolfcode.p2p.base.domain.LoginInfo" columnPrefix="au_">
+      <id column="id" property="id" />
+      <result column="username" property="username" />
+    </association>
+    <association property="applier" javaType="cn.wolfcode.p2p.base.domain.LoginInfo" columnPrefix="ap_">
+      <id column="id" property="id" />
+      <result column="username" property="username" />
+    </association>
+    <association property="orderTime" javaType="cn.wolfcode.p2p.base.domain.OrderTime" columnPrefix="ot_">
+      <id column="id" property="id" />
+      <result column="begin" property="begin" />
+      <result column="end" property="end" />
+    </association>
+  </resultMap>
+  <delete id="deleteByPrimaryKey">
+    delete from video_auth
+    where id = #{id}
+  </delete>
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into video_auth (state, remark, audit_time, apply_time, auditor_id, applier_id, 
+      order_time_id, order_date)
+    values (#{state}, #{remark}, #{auditTime}, #{applyTime}, #{auditor.id}, #{applier.id},
+      #{orderTime.id}, #{orderDate})
+  </insert>
+  <update id="updateByPrimaryKey">
+    update video_auth
+    set state = #{state},
+      remark = #{remark},
+      audit_time = #{auditTime},
+      apply_time = #{applyTime},
+      auditor_id = #{auditor.id},
+      applier_id = #{applier.id},
+      order_time_id = #{orderTime.id},
+      order_date = #{orderDate}
+    where id = #{id}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+    select va.id, va.state, va.remark,va.order_date,va.apply_time,va.audit_time,
+    au.id au_id,au.username au_username,
+    ap.id ap_id,ap.username ap_username,
+    ot.id ot_id,ot.begin ot_begin,ot.end ot_end
+    from video_auth va
+    JOIN login_info ap ON va.applier_id = ap.id
+    LEFT JOIN login_info au ON va.auditor_id = au.id
+    JOIN order_time ot ON va.order_time_id = ot.id
+    where va.id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select va.id, va.state, va.remark,va.order_date,
+    au.id au_id,au.username au_username,
+    ap.id ap_id,ap.username ap_username,
+    ot.id ot_id,ot.begin ot_begin,ot.end ot_end
+    from video_auth va
+    JOIN login_info ap ON va.applier_id = ap.id
+    LEFT JOIN login_info au ON va.auditor_id = au.id
+    JOIN order_time ot ON va.order_time_id = ot.id
+  </select>
+
+  <select id="selectForCount" resultType="int" >
+    SELECT count(0) FROM video_auth va
+    JOIN login_info ap ON va.applier_id = ap.id
+    <include refid="where_sql"/>
+  </select>
+
+  <select id="selectForList" resultMap="BaseResultMap">
+    select va.id, va.state, va.remark,va.order_date,va.apply_time,va.audit_time,
+    au.id au_id,au.username au_username,
+    ap.id ap_id,ap.username ap_username,
+    ot.id ot_id,ot.begin ot_begin,ot.end ot_end
+    from video_auth va
+    JOIN login_info ap ON va.applier_id = ap.id
+    LEFT JOIN login_info au ON va.auditor_id = au.id
+    JOIN order_time ot ON va.order_time_id = ot.id
+    <include refid="where_sql"/>
+  </select>
+
+  <sql id="where_sql">
+    <where>
+      <if test="state!=-1">
+        AND va.state = #{state}
+      </if>
+      <if test="beginDate!=null">
+        AND va.order_date &gt;= #{beginDate}
+      </if>
+      <if test="endDate!=null">
+        AND va.order_date &lt;= #{endDate}
+      </if>
+      <if test="auditorId!=null">
+        AND va.auditor_id = #{auditorId}
+      </if>
+      <if test="username!=null">
+        AND ap.username = #{username}
+      </if>
+    </where>
+  </sql>
+
+
+</mapper>

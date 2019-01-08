@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.base.mapper.UserInfoMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.base.domain.UserInfo">
+    <id column="id" property="id" />
+    <result column="version" property="version" />
+    <result column="bit_state" property="bitState" />
+    <result column="real_name" property="realName" />
+    <result column="id_number" property="idNumber" />
+    <result column="phone_number" property="phoneNumber" />
+    <result column="email" property="email" />
+    <result column="real_auth_id" property="realAuthId"/>
+    <result column="video_auth_id" property="videoAuthId"/>
+    <association property="incomeGrade" columnPrefix="income_" resultMap="cn.wolfcode.p2p.base.mapper.SystemDictionaryItemMapper.BaseResultMap"></association>
+    <association property="marriage" columnPrefix="marriage_" resultMap="cn.wolfcode.p2p.base.mapper.SystemDictionaryItemMapper.BaseResultMap"></association>
+    <association property="kidCount" columnPrefix="kid_" resultMap="cn.wolfcode.p2p.base.mapper.SystemDictionaryItemMapper.BaseResultMap"></association>
+    <association property="educationBackground" columnPrefix="education_" resultMap="cn.wolfcode.p2p.base.mapper.SystemDictionaryItemMapper.BaseResultMap"></association>
+    <association property="houseCondition" columnPrefix="house_" resultMap="cn.wolfcode.p2p.base.mapper.SystemDictionaryItemMapper.BaseResultMap"></association>
+  </resultMap>
+
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into user_info (id,version, bit_state, real_name, id_number, phone_number, email,
+      income_grade_id, marriage_id, kid_count_id, education_background_id, house_condition_id)
+    values (#{id},#{version}, #{bitState}, #{realName}, #{idNumber}, #{phoneNumber}, #{email},
+      #{incomeGrade.id}, #{marriage.id}, #{kidCount.id}, #{educationBackground.id}, #{houseCondition.id})
+  </insert>
+  <update id="updateByPrimaryKey">
+    update user_info
+    set version = version+1,
+      bit_state = #{bitState},
+      real_name = #{realName},
+      id_number = #{idNumber},
+      real_auth_id = #{realAuthId},
+      video_auth_id = #{videoAuthId},
+      phone_number = #{phoneNumber},
+      email = #{email},
+      income_grade_id = #{incomeGrade.id},
+      marriage_id = #{marriage.id},
+      kid_count_id = #{kidCount.id},
+      education_background_id = #{educationBackground.id},
+      house_condition_id = #{houseCondition.id}
+    where id = #{id} AND version = #{version}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+    select ui.id, ui.version, ui.bit_state, ui.real_name, ui.id_number, ui.phone_number, ui.email,ui.real_auth_id,ui.video_auth_id,
+    income.id income_id,income.title income_title,
+    marriage.id marriage_id,marriage.title marriage_title,
+    kid.id kid_id,kid.title kid_title,
+    education.id education_id,education.title education_title,
+    house.id house_id,house.title house_title
+    from user_info ui
+    LEFT JOIN system_dictionary_item income ON ui.income_grade_id = income.id
+    LEFT JOIN system_dictionary_item marriage ON ui.marriage_id = marriage.id
+    LEFT JOIN system_dictionary_item kid ON ui.kid_count_id = kid.id
+    LEFT JOIN system_dictionary_item education ON ui.education_background_id = education.id
+    LEFT JOIN system_dictionary_item house ON ui.house_condition_id = house.id
+    where ui.id = #{id}
+  </select>
+
+
+</mapper>

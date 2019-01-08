@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.base.mapper.RealAuthMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.base.domain.RealAuth">
+    <id column="id" property="id" />
+    <result column="real_name" property="realName" />
+    <result column="sex" property="sex" />
+    <result column="born_date" property="bornDate" />
+    <result column="id_number" property="idNumber" />
+    <result column="address" property="address" />
+    <result column="state" property="state" />
+    <result column="image1" property="image1" />
+    <result column="image2" property="image2" />
+    <result column="remark" property="remark" />
+    <result column="audit_time" property="auditTime" />
+    <result column="apply_time" property="applyTime" />
+    <result column="version" property="version"/>
+    <association property="auditor" javaType="cn.wolfcode.p2p.base.domain.LoginInfo" columnPrefix="au_">
+      <id column="id" property="id" />
+      <result column="username" property="username" />
+    </association>
+    <association property="applier" javaType="cn.wolfcode.p2p.base.domain.LoginInfo" columnPrefix="ap_">
+      <id column="id" property="id" />
+      <result column="username" property="username" />
+    </association>
+  </resultMap>
+  <delete id="deleteByPrimaryKey">
+    delete from real_auth
+    where id = #{id}
+  </delete>
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into real_auth (real_name, sex, born_date, id_number, address, state, image1, 
+      image2, remark, audit_time, apply_time, auditor_id, applier_id)
+    values (#{realName}, #{sex}, #{bornDate}, #{idNumber}, #{address}, #{state}, #{image1}, 
+      #{image2}, #{remark}, #{auditTime}, #{applyTime}, #{auditor.id}, #{applier.id})
+  </insert>
+  <update id="updateByPrimaryKey">
+    update real_auth
+    set real_name = #{realName},
+      version=version+1,
+      sex = #{sex},
+      born_date = #{bornDate},
+      id_number = #{idNumber},
+      address = #{address},
+      state = #{state},
+      image1 = #{image1},
+      image2 = #{image2},
+      remark = #{remark},
+      audit_time = #{auditTime},
+      apply_time = #{applyTime},
+      auditor_id = #{auditor.id},
+      applier_id = #{applier.id}
+    where id = #{id} AND version=#{version}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+    select ra.id,ra.version, ra.real_name, ra.sex, ra.born_date, ra.id_number, ra.address, ra.state, ra.image1, ra.image2,
+    ra.remark, ra.audit_time, ra.apply_time,
+    au.id au_id,au.username au_username,
+    ap.id ap_id,ap.username ap_username
+    from real_auth ra LEFT JOIN login_info au ON ra.auditor_id = au.id
+    JOIN login_info ap ON ra.applier_id=ap.id
+    where ra.id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select ra.id, ra.real_name, ra.sex, ra.born_date, ra.id_number, ra.address, ra.state, ra.image1, ra.image2,
+    ra.remark, ra.audit_time, ra.apply_time,
+    au.id au_id,au.username au_username,
+    ap.id ap_id,ap.username ap_username
+    from real_auth ra LEFT JOIN login_info au ON ra.auditor_id = au.id
+    JOIN login_info ap ON ra.applier_id=ap.id
+  </select>
+
+  <sql id="where_sql">
+    <where>
+      <if test="state!=-1">
+        AND ra.state=#{state}
+      </if>
+      <if test="beginDate!=null">
+        AND apply_time &gt;= #{beginDate}
+      </if>
+      <if test="endDate!=null">
+        AND apply_time &lt;= #{endDate}
+      </if>
+    </where>
+  </sql>
+
+    <select id="selectForCount" resultType="int">
+      SELECT count(0) FROM real_auth ra
+      <include refid="where_sql"/>
+    </select>
+
+  <select id="selectForList" resultMap="BaseResultMap">
+    select ra.id, ra.real_name, ra.sex, ra.born_date, ra.id_number, ra.address, ra.state, ra.image1, ra.image2,
+    ra.remark, ra.audit_time, ra.apply_time,
+    au.id au_id,au.username au_username,
+    ap.id ap_id,ap.username ap_username
+    from real_auth ra LEFT JOIN login_info au ON ra.auditor_id = au.id
+    JOIN login_info ap ON ra.applier_id=ap.id
+    <include refid="where_sql"/>
+  </select>
+</mapper>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.business.mapper.CreditTransferMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.business.domain.CreditTransfer">
+    <id column="id" property="id" />
+    <result column="version" property="version" />
+    <result column="bid_id" property="bidId" />
+    <result column="bid_request_id" property="bidRequestId" />
+    <result column="bid_request_amount" property="bidRequestAmount" />
+    <result column="current_rate" property="currentRate" />
+    <result column="return_type" property="returnType" />
+    <result column="month_index" property="monthIndex" />
+    <result column="remain_month_index" property="remainMonthIndex" />
+    <result column="remain_interest" property="remainInterest" />
+    <result column="closest_dead_line" property="closestDeadLine" />
+    <result column="bid_request_title" property="bidRequestTitle" />
+    <result column="bid_request_state" property="bidRequestState" />
+    <result column="publish_date" property="publishDate" />
+    <result column="trans_date" property="transDate" />
+    <association property="transFrom" columnPrefix="tf_" resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.simpleMap"></association>
+    <association property="transTo" columnPrefix="tt_" resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.simpleMap"></association>
+  </resultMap>
+  <delete id="deleteByPrimaryKey">
+    delete from credit_transfer
+    where id = #{id}
+  </delete>
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into credit_transfer (version, bid_id, bid_request_id, bid_request_amount, current_rate, 
+      return_type, month_index, remain_month_index, remain_interest, closest_dead_line, 
+      bid_request_title, bid_request_state, trans_from_id, trans_toId, publish_date, 
+      trans_date)
+    values (#{version}, #{bidId}, #{bidRequestId}, #{bidRequestAmount}, #{currentRate}, 
+      #{returnType}, #{monthIndex}, #{remainMonthIndex}, #{remainInterest}, #{closestDeadLine}, 
+      #{bidRequestTitle}, #{bidRequestState}, #{transFrom.id}, #{transTo.id}, #{publishDate},
+      #{transDate})
+  </insert>
+  <update id="updateByPrimaryKey">
+    update credit_transfer
+    set version = version + 1,
+      bid_id = #{bidId},
+      bid_request_id = #{bidRequestId},
+      bid_request_amount = #{bidRequestAmount},
+      current_rate = #{currentRate},
+      return_type = #{returnType},
+      month_index = #{monthIndex},
+      remain_month_index = #{remainMonthIndex},
+      remain_interest = #{remainInterest},
+      closest_dead_line = #{closestDeadLine},
+      bid_request_title = #{bidRequestTitle},
+      bid_request_state = #{bidRequestState},
+      trans_from_id = #{transFrom.id},
+      trans_toId = #{transTo.id},
+      publish_date = #{publishDate},
+      trans_date = #{transDate}
+    where id = #{id} AND version = #{version}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+    select ct.id, version, bid_id, bid_request_id, bid_request_amount, current_rate, return_type,
+    month_index, remain_month_index, remain_interest, closest_dead_line, bid_request_title,
+    bid_request_state, publish_date, trans_date,
+    tf.id tf_id,tf.username tf_username,
+    tt.id tt_id,tt.username tt_username
+    from credit_transfer ct
+    JOIN login_info tf ON ct.trans_from_id = tf.id
+    LEFT JOIN login_info tt ON ct.trans_toId = tt.id
+    where ct.id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, version, bid_id, bid_request_id, bid_request_amount, current_rate, return_type, 
+    month_index, remain_month_index, remain_interest, closest_dead_line, bid_request_title, 
+    bid_request_state, trans_from_id, trans_toId, publish_date, trans_date
+    from credit_transfer
+  </select>
+  <select id="selectForCanTransList" resultMap="BaseResultMap">
+    SELECT t.bid_id,
+    t.bid_request_id,
+    t.bid_request_amount,
+    t.remain_interest,
+    t.remain_month_index,
+    t.closest_dead_line,
+    br.title bid_request_title,
+    br.current_rate FROM
+
+    (SELECT bid_id,bid_request_id,
+    SUM(principal) bid_request_amount,
+    SUM(interest) remain_interest,
+    COUNT(0) remain_month_index,
+    MIN(dead_line) closest_dead_line
+    FROM payment_schedule_detail
+    WHERE to_login_info_id = #{toLoginInfoId} AND pay_date IS NULL AND transfer_state = 0
+    GROUP BY bid_id,bid_request_id) t
+    JOIN bid_request br ON t.bid_request_id=br.id
+    LIMIT #{start},#{pageSize}
+  </select>
+
+  <select id="selectForCanTransCount" resultType="int">
+    SELECT count(t.bid_id) FROM
+    (SELECT bid_id
+    FROM payment_schedule_detail
+    WHERE to_login_info_id = #{toLoginInfoId} AND pay_date IS NULL AND transfer_state = 0
+    GROUP BY bid_id,bid_request_id) t
+  </select>
+  <select id="selectForTransList" resultMap="BaseResultMap">
+    SELECT t.bid_id,
+    t.bid_request_id,
+    t.bid_request_amount,
+    t.remain_interest,
+    t.remain_month_index,
+    t.closest_dead_line,
+    br.title bid_request_title,
+    br.current_rate,
+    br.return_type,
+    br.return_monthes month_index
+    FROM
+    (SELECT bid_id,bid_request_id,
+    SUM(principal) bid_request_amount,
+    SUM(interest) remain_interest,
+    COUNT(0) remain_month_index,
+    MIN(dead_line) closest_dead_line
+    FROM payment_schedule_detail
+    WHERE to_login_info_id = #{transFromId} AND pay_date IS NULL AND transfer_state = 0
+    AND bid_id IN
+    <foreach collection="bidIds" open="(" separator="," close=")" item="bidId">
+      #{bidId}
+    </foreach>
+    GROUP BY bid_id,bid_request_id) t
+    JOIN bid_request br ON t.bid_request_id=br.id
+  </select>
+  <select id="selectForCount" resultType="int">
+    SELECT count(0) FROM credit_transfer
+    WHERE bid_request_state = #{state}
+  </select>
+  <select id="selectForList" resultMap="BaseResultMap">
+    select ct.id, version, bid_id, bid_request_id, bid_request_amount, current_rate, return_type,
+    month_index, remain_month_index, remain_interest, closest_dead_line, bid_request_title,
+    bid_request_state, publish_date, trans_date,
+    tf.id tf_id,tf.username tf_username,
+    tt.id tt_id,tt.username tt_username
+    from credit_transfer ct
+    JOIN login_info tf ON ct.trans_from_id = tf.id
+    LEFT JOIN login_info tt ON ct.trans_toId = tt.id
+    WHERE ct.bid_request_state=#{state}
+    LIMIT #{start},#{pageSize}
+  </select>
+  <select id="selectForMyTransCount" resultType="int">
+    SELECT count(0) FROM credit_transfer ct
+    <include refid="base_where_mytrans"/>
+  </select>
+  <select id="selectForMyTransList" resultMap="BaseResultMap">
+    select ct.id, version, bid_id, bid_request_id, bid_request_amount, current_rate, return_type,
+    month_index, remain_month_index, remain_interest, closest_dead_line, bid_request_title,
+    bid_request_state, publish_date, trans_date,
+    tf.id tf_id,tf.username tf_username,
+    tt.id tt_id,tt.username tt_username
+    from credit_transfer ct
+    JOIN login_info tf ON ct.trans_from_id = tf.id
+    LEFT JOIN login_info tt ON ct.trans_toId = tt.id
+    <include refid="base_where_mytrans"/>
+    LIMIT #{start},#{pageSize}
+  </select>
+  <sql id="base_where_mytrans">
+    <where>
+      <if test="toLoginInfoId!=null">
+        AND ct.trans_from_id = #{toLoginInfoId}
+      </if>
+      <if test="state!=-1">
+        AND ct.bid_request_state = #{state}
+      </if>
+    </where>
+  </sql>
+
+  <update id="batchUpdateTransStateInTransingByBidRequestId">
+    UPDATE credit_transfer SET bid_request_state=1
+    WHERE bid_request_id=#{bidRequestId} AND bid_request_state = 0
+  </update>
+
+</mapper>

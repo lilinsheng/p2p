@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.business.mapper.RechargeOfflineMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.business.domain.RechargeOffline">
+    <id column="id" property="id" />
+    <result column="state" property="state" />
+    <result column="remark" property="remark" />
+    <result column="audit_time" property="auditTime" />
+    <result column="apply_time" property="applyTime" />
+    <result column="trade_code" property="tradeCode" />
+    <result column="trade_time" property="tradeTime" />
+    <result column="amount" property="amount" />
+    <result column="note" property="note" />
+    <association property="auditor" resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.simpleMap" columnPrefix="au_">
+    </association>
+    <association property="applier" resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.simpleMap" columnPrefix="ap_">
+    </association>
+    <association property="bankInfo" resultMap="cn.wolfcode.p2p.business.mapper.PlatformBankInfoMapper.BaseResultMap" columnPrefix="pbi_"></association>
+  </resultMap>
+  <delete id="deleteByPrimaryKey">
+    delete from recharge_offline
+    where id = #{id}
+  </delete>
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into recharge_offline (state, remark, audit_time, apply_time, auditor_id, applier_id, 
+      trade_code, trade_time, amount, note, bank_info_id)
+    values (#{state}, #{remark}, #{auditTime}, #{applyTime}, #{auditor.id}, #{applier.id},
+      #{tradeCode}, #{tradeTime}, #{amount}, #{note}, #{bankInfo.id})
+  </insert>
+  <update id="updateByPrimaryKey">
+    update recharge_offline
+    set state = #{state},
+      remark = #{remark},
+      audit_time = #{auditTime},
+      apply_time = #{applyTime},
+      auditor_id = #{auditor.id},
+      applier_id = #{applier.id},
+      trade_code = #{tradeCode},
+      trade_time = #{tradeTime},
+      amount = #{amount},
+      note = #{note},
+      bank_info_id = #{bankInfo.id}
+    where id = #{id}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+    select ro.id, ro.state, remark, audit_time, apply_time, auditor_id, applier_id, trade_code,
+    trade_time, amount, note, bank_info_id,
+    ap.id ap_id,ap.username ap_username,
+    pbi.id pbi_id,pbi.bank_name pbi_bank_name,pbi.account_name pbi_account_name,
+    pbi.account_number pbi_account_number,pbi.bank_fork_name pbi_bank_fork_name
+    from recharge_offline ro
+    JOIN login_info ap ON ro.applier_id = ap.id
+    JOIN platform_bank_info pbi ON ro.bank_info_id  = pbi.id
+    where ro.id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, state, remark, audit_time, apply_time, auditor_id, applier_id, trade_code, 
+    trade_time, amount, note, bank_info_id
+    from recharge_offline
+  </select>
+
+  <select id="selectByTradeCodeAndState" resultType="int">
+    SELECT count(0) FROM recharge_offline
+    WHERE trade_code = #{tradeCode} AND  state =#{state}
+  </select>
+
+  <select id="selectForCount" resultType="int">
+    SELECT count(0) FROM recharge_offline ro
+    <include refid="base_where"/>
+  </select>
+  <select id="selectForList" resultMap="BaseResultMap">
+    select ro.id, ro.state, remark, audit_time, apply_time, auditor_id, applier_id, trade_code,
+    trade_time, amount, note, bank_info_id,
+    ap.id ap_id,ap.username ap_username,
+    au.id au_id,au.username au_username,
+    pbi.id pbi_id,pbi.bank_name pbi_bank_name,pbi.account_name pbi_account_name,
+    pbi.account_number pbi_account_number,pbi.bank_fork_name pbi_bank_fork_name
+    from recharge_offline ro
+    JOIN login_info ap ON ro.applier_id = ap.id
+    LEFT JOIN login_info au ON ro.auditor_id = au.id
+    JOIN platform_bank_info pbi ON ro.bank_info_id  = pbi.id
+    <include refid="base_where"/>
+  </select>
+
+  <sql id="base_where">
+    <where>
+      <if test="state!=-1">
+        AND ro.state = #{state}
+      </if>
+      <if test="beginDate!=null">
+        AND ro.trade_time &gt;= #{beginDate}
+      </if>
+      <if test="endDate!=null">
+        AND ro.trade_time &lt;= #{endDate}
+      </if>
+      <if test="bankInfoId!=null">
+        AND ro.bank_info_id = #{bankInfoId}
+      </if>
+      <if test="tradeCode!=null">
+        AND ro.trade_code = #{tradeCode}
+      </if>
+    </where>
+  </sql>
+</mapper>

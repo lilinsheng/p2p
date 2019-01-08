@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.base.mapper.IpLogMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.base.domain.IpLog">
+    <id column="id" property="id" />
+    <result column="ip" property="ip" />
+    <result column="state" property="state" />
+    <result column="username" property="username" />
+    <result column="login_time" property="loginTime" />
+    <result column="user_type" property="userType"/>
+  </resultMap>
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into ip_log (ip, state, username, login_time,user_type)
+    values (#{ip}, #{state}, #{username}, #{loginTime},#{userType})
+  </insert>
+
+  <select id="selectLastLoginTime" resultType="date">
+    SELECT max(login_time) FROM ip_log
+    WHERE username = #{username}
+  </select>
+  
+  <sql id="condition">
+    <where>
+      <if test="beginDate!=null">
+        And login_time &gt;= #{beginDate}
+      </if>
+      <if test="endDate!=null">
+        And login_time &lt;= #{endDate}
+      </if>
+      <if test="state!=-1">
+        And state = #{state}
+      </if>
+      <if test="username!=null">
+        And username = #{username}
+      </if>
+      <if test="userType!=-1">
+        And user_type = #{userType}
+      </if>
+    </where>
+  </sql>
+  
+  <select id="selectForCount" resultType="int">
+    SELECT count(0) FROM ip_log
+    <include refid="condition"/>
+  </select>
+  <select id="selectForList" resultMap="BaseResultMap">
+    SELECT ip,username,login_time,state,user_type FROM ip_log
+    <include refid="condition"/>
+    LIMIT #{start},#{pageSize}
+  </select>
+</mapper>

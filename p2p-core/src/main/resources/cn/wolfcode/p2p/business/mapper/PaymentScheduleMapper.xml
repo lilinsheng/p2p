@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.business.mapper.PaymentScheduleMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.business.domain.PaymentSchedule">
+    <id column="id" property="id" />
+    <result column="dead_line" property="deadLine" />
+    <result column="pay_date" property="payDate" />
+    <result column="total_amount" property="totalAmount" />
+    <result column="principal" property="principal" />
+    <result column="interest" property="interest" />
+    <result column="month_index" property="monthIndex" />
+    <result column="state" property="state" />
+    <result column="bid_request_type" property="bidRequestType" />
+    <result column="return_type" property="returnType" />
+    <result column="bid_request_id" property="bidRequestId" />
+    <result column="bid_request_title" property="bidRequestTitle" />
+    <result column="overdue_amount" property="overdueAmount"/>
+    <association property="borrowUser" columnPrefix="bu_" resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.simpleMap"></association>
+  </resultMap>
+  <delete id="deleteByPrimaryKey">
+    delete from payment_schedule
+    where id = #{id}
+  </delete>
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into payment_schedule (dead_line, pay_date, total_amount, principal, interest, month_index, 
+      state, bid_request_type, return_type, bid_request_id, borrow_user_id, bid_request_title
+      )
+    values (#{deadLine}, #{payDate}, #{totalAmount}, #{principal}, #{interest}, #{monthIndex}, 
+      #{state}, #{bidRequestType}, #{returnType}, #{bidRequestId}, #{borrowUser.id}, #{bidRequestTitle}
+      )
+  </insert>
+  <update id="updateByPrimaryKey">
+    update payment_schedule
+    set dead_line = #{deadLine},
+      pay_date = #{payDate},
+      total_amount = #{totalAmount},
+      principal = #{principal},
+      interest = #{interest},
+      month_index = #{monthIndex},
+      state = #{state},
+      bid_request_type = #{bidRequestType},
+      return_type = #{returnType},
+      bid_request_id = #{bidRequestId},
+      borrow_user_id = #{borrowUser.id},
+      bid_request_title = #{bidRequestTitle},
+      overdue_amount = #{overdueAmount}
+    where id = #{id}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+    select ps.id, dead_line, pay_date, total_amount, principal, interest, month_index, ps.state,
+    bid_request_type, return_type, bid_request_id, borrow_user_id, bid_request_title,
+    bu.id bu_id,bu.username bu_username
+    from payment_schedule ps
+    JOIN login_info bu ON ps.borrow_user_id = bu.id
+    where ps.id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, dead_line, pay_date, total_amount, principal, interest, month_index, state, 
+    bid_request_type, return_type, bid_request_id, borrow_user_id, bid_request_title
+    from payment_schedule
+  </select>
+    <select id="selectForCount" resultType="int">
+      SELECT count(0) FROM payment_schedule ps
+      <include refid="base_where"/>
+    </select>
+  <select id="selectForList" resultMap="BaseResultMap">
+    select ps.id, dead_line, pay_date, total_amount, principal, interest, month_index, ps.state,
+    bid_request_type, return_type, bid_request_id, borrow_user_id, bid_request_title,overdue_amount,
+    bu.id bu_id,bu.username bu_username
+    from payment_schedule ps
+    JOIN login_info bu ON ps.borrow_user_id = bu.id
+    <include refid="base_where"/>
+    <if test="pageSize!=-1">
+      LIMIT #{start},#{pageSize}
+    </if>
+  </select>
+
+  <select id="selectReturnNumber" resultType="int">
+    SELECT count(0) FROM payment_schedule
+    WHERE bid_request_id=#{bidRequestId} AND state=#{state}
+  </select>
+
+    <select id="selectNoReturnExpGold" resultMap="BaseResultMap">
+      select ps.id, ps.dead_line, ps.pay_date, ps.total_amount, ps.principal, ps.interest, ps.month_index, ps.state,
+        ps.bid_request_type, ps.return_type, ps.bid_request_id, ps.borrow_user_id, ps.bid_request_title,ps.overdue_amount,
+        bu.id bu_id,bu.username bu_username
+      from payment_schedule ps
+        JOIN login_info bu ON ps.borrow_user_id = bu.id
+      JOIN bid_request br ON ps.bid_request_id = br.id
+      WHERE br.bid_request_type = #{bidRequestType} AND ps.pay_date IS NULL
+    </select>
+
+    <sql id="base_where">
+    <where>
+      <if test="state!=-1">
+        AND ps.state = #{state}
+      </if>
+      <if test="beginDate!=null">
+        AND ps.dead_line &gt;= #{beginDate}
+      </if>
+      <if test="endDate!=null">
+        AND ps.dead_line &lt;= #{endDate}
+      </if>
+      <if test="borrowUserId!=null">
+        AND ps.borrow_user_id = #{borrowUserId}
+      </if>
+    </where>
+  </sql>
+</mapper>
